@@ -2,9 +2,10 @@
  * Проект: Система управления температурой с передачей данных на сервер
  * Версия: 2024-05-21_16
  * Платформа: Arduino Pro Mini + ESP-01 (Wi‑Fi)
- * Компоненты: 2×DS18B20, 2×реле, фоторезистор
+ * Компоненты: 2×DS18B20, 2×реле, фоторезистор, кнопка
  * Функции:
  *   - Измерение температуры каждые 10 минут (двойное измерение с усреднением)
+ *   - Принудительный опрос температуры по нажатию кнопки
  *   - Управление реле с гистерезисом и приоритетом реле 2
  *   - Передача данных на сервер: каждый час и при переключении реле
  *   - Индикация процесса измерения встроенным светодиодом
@@ -23,6 +24,7 @@
 #define LED_PIN 13
 #define ESP_TX_PIN 6
 #define ESP_RX_PIN 7
+#define BUTTON_PIN 8
 
 // Настройки Wi‑Fi и сервера
 const char* SSID = "your_wifi_ssid";
@@ -41,7 +43,6 @@ const unsigned long MEASUREMENT_INTERVAL = 600000UL;  // 10 минут
 const unsigned long INTER_MEASUREMENT_DELAY = 10000UL;     // 10 секунд
 const unsigned long HOURLY_SEND_INTERVAL = 3600000UL;       // 1 час
 
-
 // Объекты
 OneWire oneWire1(TEMP_PIN1);
 OneWire oneWire2(TEMP_PIN2);
@@ -57,6 +58,9 @@ unsigned long lastHourlySendTime = 0;
 bool relay1State = false;
 bool relay2State = false;
 
+// Переменная для отслеживания состояния кнопки
+bool buttonPressed = false;
+
 void setup() {
   Serial.begin(9600);
   espSerial.begin(115200);  // скорость для ESP‑01
@@ -66,6 +70,7 @@ void setup() {
   pinMode(RELAY1_PIN, OUTPUT);
   pinMode(RELAY2_PIN, OUTPUT);
   pinMode(LED_PIN, OUTPUT);
+  pinMode(BUTTON_PIN, INPUT_PULLUP);  // внутренний подтягивающий резистор
 
   digitalWrite(RELAY1_PIN, HIGH);
   digitalWrite(RELAY2_PIN, HIGH);
@@ -77,6 +82,18 @@ void setup() {
 
 void loop() {
   unsigned long currentTime = millis();
+
+  // Проверка нажатия кнопки
+  if (digitalRead(BUTTON_PIN) == LOW) {
+    delay(50);  // антидребезг
+    if (digitalRead(BUTTON_PIN) == LOW && !buttonPressed) {
+      buttonPressed = true;
+      Serial.println("Кнопка нажата — принудительный опрос температуры");
+      performMeasurementAndControl();
+    }
+  } else {
+    buttonPressed = false;  // кнопка отпущена
+  }
 
   // Проверка, пора ли делать измерение (каждые 10 минут)
   if (currentTime - previousMeasurementTime >= MEASUREMENT_INTERVAL) {
@@ -118,6 +135,7 @@ void performMeasurementAndControl() {
   bool shouldRelay2BeOff = (avgTemp2 < T2 - HYSTERESIS);
   bool shouldRelay1BeOn = (avgTemp1 < T1);
   bool shouldRelay1BeOff = (avgTemp1 > T1 + HYSTERESIS);
+
 
   bool newRelay1State = relay1State;
   bool newRelay2State = relay2State;
@@ -177,10 +195,4 @@ void connectToWiFi() {
   delay(1000);
   espSerial.println("AT+CWJAP="\"" + String(SSID) + "\",\"" + String(PASSWORD) + "\"");
   delay(5000);
-}
-
-// Функция для чтения температуры с датчика
-float getTemperature(DallasTemperature& sensor) {
-  sensor.requestTemperatures();
-  return sensor.getTempCByIndex(0);
 }
