@@ -39,9 +39,6 @@ void readWord(uint8_t slaveAddr, uint8_t dataNum) {
   sendPacket(slaveAddr, "RD", dataNum, "");
 }
 
-void readTriple(uint8_t slaveAddr, uint8_t dataNum) {
-  sendPacket(slaveAddr, "RT", dataNum, "");
-}
 
 void readLong(uint8_t slaveAddr, uint8_t dataNum) {
   sendPacket(slaveAddr, "RL", dataNum, "");
@@ -64,10 +61,6 @@ void writeWord(uint8_t slaveAddr, uint8_t dataNum, uint16_t value) {
   sendPacket(slaveAddr, "WD", dataNum, String(value));
 }
 
-void writeTriple(uint8_t slaveAddr, uint8_t dataNum, uint32_t value) {
-  uint32_t masked = value & 0xFFFFFF;
-  sendPacket(slaveAddr, "WT", dataNum, String(masked));
-}
 
 void writeLong(uint8_t slaveAddr, uint8_t dataNum, uint32_t value) {
   sendPacket(slaveAddr, "WL", dataNum, String(value));
