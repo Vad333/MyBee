@@ -62,17 +62,6 @@ void handleWriteWord(uint8_t dataNum, String valueStr) {
   }
 }
 
-// Функция для обработки команды записи тройки байтов (WT)
-void handleWriteTriple(uint8_t dataNum, String valueStr) {
-  if (dataNum < 16) {
-    uint32_t value = valueStr.toULong();
-    dataLongs[dataNum] = (dataLongs[dataNum] & 0xFF000000) | (value & 0x00FFFFFF);
-    sendResponse("OK", "");
-  } else {
-    sendResponse("ER", "");
-  }
-}
-
 // Функция для обработки команды записи длинного значения (4 байта, WL)
 void handleWriteLong(uint8_t dataNum, String valueStr) {
   if (dataNum < 16) {
@@ -133,8 +122,6 @@ void parsePacket(String packet) {
     handleWriteByte(dataNum, packet.substring(7));
   } else if (cmd == "WD") {
     handleWriteWord(dataNum, packet.substring(7));
-  } else if (cmd == "WT") {
-    handleWriteTriple(dataNum, packet.substring(7));
   } else if (cmd == "WL") {
     handleWriteLong(dataNum, packet.substring(7));
   } else if (cmd == "WX") {
@@ -147,8 +134,6 @@ void parsePacket(String packet) {
     handleReadByte(dataNum);
   } else if (cmd == "RD") {
     handleReadWord(dataNum);
-  } else if (cmd == "RT") {
-    handleReadTriple(dataNum);
   } else if (cmd == "RL") {
     handleReadLong(dataNum);
   } else if (cmd == "RX") {
