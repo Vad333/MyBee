@@ -42,15 +42,6 @@ void handleReadWord(uint8_t dataNum) {
   }
 }
 
-// Функция для обработки команды чтения тройки байтов (RT)
-void handleReadTriple(uint8_t dataNum) {
-  if (dataNum < 16) {
-    uint32_t triple = dataLongs[dataNum] & 0xFFFFFF;
-    sendResponse("OK", String(triple));
-  } else {
-    sendResponse("ER", "");
-  }
-}
 
 // Функция для обработки команды чтения длинного значения (4 байта, RL)
 void handleReadLong(uint8_t dataNum) {
