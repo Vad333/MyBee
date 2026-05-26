@@ -4,7 +4,15 @@
 // Настройка последовательного порта для RS-485
 SoftwareSerial rs485(10, 11); // RX, TX
 
-#define MY_DEVICE_ADDR 0x02  // Адрес этого ведомого устройства
+// Адрес этого ведомого устройства (в шестнадцатеричном формате)
+uint8_t MY_DEVICE_ADDR = 0x02;
+
+// Массивы для хранения данных по номерам
+uint8_t dataBytes[16];
+uint16_t dataWords[16];
+uint32_t dataLongs[16];
+String dataTexts[16];
+String status;
 
 void setup() {
   Serial.begin(9600);   // Инициализация основного последовательного порта для отладки
@@ -12,7 +20,7 @@ void setup() {
   Serial.println("Slave device started with address: 0x");
   Serial.println(MY_DEVICE_ADDR, HEX);
 
-  // Инициализация данных (можно заменить на реальные датчики/реле)
+  // Инициализация данных
   initializeData();
 }
 
@@ -25,7 +33,7 @@ void loop() {
 
     // Если встретили стоповый байт, обрабатываем пакет
     if (c == '\n') {
-      parsePacket(incomingPacket, MY_DEVICE_ADDR);
+      parsePacket(incomingPacket);
       incomingPacket = "";  // Очищаем буфер
     }
   }
